@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:whisp.xcodeproj">
+      location = "self:Whisp_playground.xcodeproj">
    </FileRef>
 </Workspace>
