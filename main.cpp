@@ -13,6 +13,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 const uint32_t chunk_RIFF = 'RIFF';
 const uint32_t chunk_RF64 = 'RF64';
@@ -95,7 +96,7 @@ struct AudioFile{
         while (!stream.eof()) {
             stream.read((char*)&intTag, 4);
             if(stream.eof()){
-                cout << "Reached end of stream - breaking\n";
+                //cout << "Reached end of file\n";
                 break;
             }
             char tag[5] = {0};
@@ -132,7 +133,7 @@ struct AudioFile{
             
             switch(chunkType){
                 case 'fmt ': /*chunk_fmt:*/ {
-                    cout<< "Parsiing FMT chunk" << '\n';
+                    //cout<< "Parsing FMT chunk" << '\n';
                     stream.read((char*)&fmt, sizeof(fmt));
                     
                     _samplerate = fmt.samplerate;
@@ -154,7 +155,7 @@ struct AudioFile{
                     break;
                 }
                 case chunk_data: {
-                    cout<< "Parse data chunk\n";
+                    //cout<< "Parse data chunk\n";
                     _datasize = _tagsize;
 
                     if (pInfo.formatChunkPresent) {
@@ -263,8 +264,6 @@ bool readHeader(string filepath, AudioFile* audiofile){
     unsigned long totalchunksize=0;
     
     inputStream.read(reinterpret_cast<char*>(&totalchunksize), 4);
-    cout<< "total chunk size: "<<totalchunksize << '\n';
-    
     if (totalchunksize==0) {
         cout<< "ERROR - total chunk size is zero - possible file closing fault!\n";
         //        return false;
@@ -274,9 +273,8 @@ bool readHeader(string filepath, AudioFile* audiofile){
     chunkType = _OSSwapInt32(intTag);
     
     if (chunkType==chunk_WAVE) {
-        cout<<"IS A WAVE FILE\n";
     }else{
-        cout <<"WAVE tag missing\n";
+        cout <<"WAVE tag missing, returning\n";
         inputStream.close();
         return false;
     }
@@ -301,11 +299,23 @@ void allocateByteArray(char& input, int bytesPerSample, char* bufToWriteTo){
     }
 }
 
+void printElapsedTimeSince(std::chrono::time_point<std::chrono::high_resolution_clock> start){
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = end - start;
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+    
+    std::cout << "ELAPSED TIME SINCE START: " << elapsed_seconds << " SECONDS\n";
+}
+
 int main(){
+    auto start = std::chrono::high_resolution_clock::now();
+    std::cout << "START\n" << '\n';
     const double OutSampleRate = 16000.0;
     AudioFile wavFile;
     auto filePath = "/Users/tonytorm/Desktop/kraken_media/bal/MIXER-A-T01.WAV";
     if (readHeader(filePath, &wavFile)){
+        std::cout << "Wave file parsed -  ";
+        printElapsedTimeSince(start);
         ifstream inputStream;
         std::vector<ofstream> outputStreams;
         inputStream.open(filePath, ifstream::binary); //49152
@@ -327,14 +337,14 @@ int main(){
             outputStreams.emplace_back(ofstream(outputFileName, ofstream::binary));
             ofstream& stream = outputStreams.back();
             writeRIFFChunk(stream, totalFileSize);
-            writeFMTChunk(stream, 48000, 16, 1);    // write a 16bit mono file for each channel
+            writeFMTChunk(stream, OutSampleRate, 16, 1);    // write a 16bit mono file for each channel
             writeDataChunkHeader(stream, dataChunkSize);
         }
         
         const int InBufCapacity = 1024;
         int channelCount = wavFile._ChannelCount;
         
-        std::vector<r8b::CDSPResampler24*> resamplers;
+        std::vector<std::unique_ptr<r8b::CDSPResampler24>> resamplers(channelCount);
         int bytesPerSample = wavFile._bitdepth/8;
         int frameSize = bytesPerSample*wavFile._ChannelCount;  // 1 sample for each channel
         const size_t INPUTBUFFERSIZE = frameSize * InBufCapacity;
@@ -342,53 +352,53 @@ int main(){
 
         for (int i = 0; i < channelCount; i++){       // allocate a buffer for each channel (planar)
             convertedPlanarBuffers.push_back(std::vector<double>(1024));
-            resamplers.push_back(new r8b::CDSPResampler24(48000.0, OutSampleRate, InBufCapacity));
+            resamplers[i].reset(new r8b::CDSPResampler24(48000.0, OutSampleRate, InBufCapacity));
         }
         char buffer[INPUTBUFFERSIZE];                          // allocate an interleaved buffer
         int dataRead = 0;
-        std::cout << "nb of required buffers: " << wavFile._datasize / INPUTBUFFERSIZE << '\n';
+        //std::cout << "nb of required buffers: " << wavFile._datasize / INPUTBUFFERSIZE << '\n';
         while (inputStream.read(buffer, INPUTBUFFERSIZE)) { // buffer speed
-            static int counter;
-            std::cout << "processing buffer nb: " << counter++ << '\n';
+            static int count = 0;
+            if (count ==0){    // just signal start of processing
+                std::cout << "Starting bit depth/sampling conversion -  ";
+                printElapsedTimeSince(start);
+                count++;
+            }
             int b = 0;
             // should we zero the buffers as well?
             for (int i = 0; i < INPUTBUFFERSIZE; i+=frameSize){  // frame speed
-                for (int j = 0; j < wavFile._ChannelCount; j++){  // sample speed
+                for (int j = 0; j < channelCount; j++){
                     char rawData[bytesPerSample];
                     for (int z = 0; z < bytesPerSample; z++){
                         rawData[z] = buffer[i + (j*bytesPerSample+z)];
                     }
                     double sample = convertByteArrayToDouble(rawData);
                     convertedPlanarBuffers.at(j).at(b) = sample;
-
-                    char outSample[2] = {0, 0};   // alloc space for 16bit sample - we can hardcode for now
-                    ConvertDoubleToByteArray(outSample, convertedPlanarBuffers.at(j).at(b));
-                    streamDataSampleInBytes(outputStreams[j], outSample);
                 }
-                b++;  // this counter is here to
+                b++;  // this counter is here to index samples
             }
             //buffer speed
-            
-//            double* resampledBuffers[ wavFile._ChannelCount ];
-//
-//            int writeCount;
-//            int bufferSize = 1024;
-//            int maxOutputBufferLength = resampler.getMaxOutLen(bufferSize);
-//            writeCount = resampler.process(convertedPlanarBuffers[1].data(), bufferSize, resampledBuffers[1]);
-//
-//            for (int i = 0; i < writeCount; i++){
-//                char outSample[2] = {0, 0};
-//                ConvertDoubleToByteArray(outSample, resampledBuffers[1][i]);
-//                streamDataSampleInBytes(outputStreams[1], outSample);
-//            }
-            
+            double* resampledBuffers[channelCount];
+            for (int j = 0; j < channelCount; j++){
+                auto& resampler = resamplers[j];
+                int writeCount;
+                writeCount = resampler->process(convertedPlanarBuffers[j].data(), InBufCapacity, resampledBuffers[j]);
+                for (int i = 0; i < writeCount; i++){
+                    char outSample[2] = {0, 0};
+                    ConvertDoubleToByteArray(outSample, resampledBuffers[j][i]);
+                    streamDataSampleInBytes(outputStreams[j], outSample);
+                }
+            }
             dataRead += inputStream.gcount();
             if (dataRead >= wavFile._datasize){
                 break;
             }
         }
+        std::cout<< "Almost done, closing file streams -  ";
+        printElapsedTimeSince(start);
         inputStream.close();
-        for (int i = 0; i < wavFile._ChannelCount; i++){
+        for (int i = 0; i < channelCount; i++){
+            // we should write data chunk size in here
             outputStreams[i].close();
         }
     }
@@ -406,6 +416,7 @@ int main(){
 //        }
 //
 //        runTranscription(ctx, params);
-    
+    std::cout << "Conversion completed -  ";
+    printElapsedTimeSince(start);
     return 0;
 }
