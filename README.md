@@ -14,6 +14,9 @@ external libraries used:
 3. https://github.com/ggerganov/whisper.cpp
 
 
+
+
+
 WARNING:
 
 You'll need a local copy of the whisper.cpp repo in order to have access to its headers, you will also have to include the relative path in your Xcode project. Everything else should be already included/linked.
