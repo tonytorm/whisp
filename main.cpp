@@ -1,4 +1,4 @@
-//#include "WhisperComponent.hpp"
+#include "WhisperComponent.hpp"
 
 #include <stdlib.h>
 
@@ -17,7 +17,7 @@
 const uint32_t chunk_RIFF = 'RIFF';
 const uint32_t chunk_RF64 = 'RF64';
 const uint32_t chunk_WAVE = 'WAVE';
-const uint32_t chunk_fmt  = 'fmt ';
+//const uint32_t chunk_fmt  = 'fmt ';
 const uint32_t chunk_data = 'data';
 
 using namespace std;
@@ -321,7 +321,7 @@ int main(){
         uint32_t totalFileSize = (8 + fmtChunkSize) + (8 + dataChunkSize);
         for (int i = 0; i < wavFile._ChannelCount; i++){
             std::stringstream ss;
-            ss << "/Users/tonytorm/Desktop/TESTWAV" << i << ".wav";
+            ss << "/Users/tonytorm/Documents/gCoding/whisp/TESTFILES/TESTWAV" << i << ".wav";
             const std::string str = ss.str();
             const char* outputFileName = str.c_str();
             outputStreams.emplace_back(ofstream(outputFileName, ofstream::binary));

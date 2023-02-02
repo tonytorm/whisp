@@ -7,8 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E32BF81F298BC15F003F583C /* WhisperComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E32BF81D298BC15F003F583C /* WhisperComponent.cpp */; };
 		E3658F4D298AD2D3006E12E2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3658F4C298AD2D3006E12E2 /* main.cpp */; };
 		E3658F4F298AD3C4006E12E2 /* r8bbase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3658F4E298AD3C4006E12E2 /* r8bbase.cpp */; };
+		E371E1B6298BC8A400A50215 /* libwhisper.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E32BF821298BC25B003F583C /* libwhisper.dylib */; };
+		E3EFFD11298BCEB9000056D6 /* libwhisper.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = E32BF821298BC25B003F583C /* libwhisper.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -21,9 +24,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		E3EFFD12298BCEB9000056D6 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				E3EFFD11298BCEB9000056D6 /* libwhisper.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E32BF81D298BC15F003F583C /* WhisperComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = WhisperComponent.cpp; path = whisp/WhisperComponent.cpp; sourceTree = SOURCE_ROOT; };
+		E32BF81E298BC15F003F583C /* WhisperComponent.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = WhisperComponent.hpp; path = whisp/WhisperComponent.hpp; sourceTree = SOURCE_ROOT; };
+		E32BF821298BC25B003F583C /* libwhisper.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libwhisper.dylib; path = LIBS/libwhisper.dylib; sourceTree = "<group>"; };
 		E3658F42298AD28C006E12E2 /* Whisp_playground */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Whisp_playground; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3658F4C298AD2D3006E12E2 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = SOURCE_ROOT; };
 		E3658F4E298AD3C4006E12E2 /* r8bbase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = r8bbase.cpp; path = resamplingCode/r8bbase.cpp; sourceTree = "<group>"; };
@@ -34,18 +51,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E371E1B6298BC8A400A50215 /* libwhisper.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E32BF820298BC25B003F583C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E32BF821298BC25B003F583C /* libwhisper.dylib */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		E3658F39298AD28C006E12E2 = {
 			isa = PBXGroup;
 			children = (
 				E3658F4E298AD3C4006E12E2 /* r8bbase.cpp */,
 				E3658F44298AD28C006E12E2 /* Whisp_playground */,
 				E3658F43298AD28C006E12E2 /* Products */,
+				E32BF820298BC25B003F583C /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -61,6 +88,8 @@
 			isa = PBXGroup;
 			children = (
 				E3658F4C298AD2D3006E12E2 /* main.cpp */,
+				E32BF81D298BC15F003F583C /* WhisperComponent.cpp */,
+				E32BF81E298BC15F003F583C /* WhisperComponent.hpp */,
 			);
 			path = Whisp_playground;
 			sourceTree = "<group>";
@@ -75,6 +104,7 @@
 				E3658F3E298AD28C006E12E2 /* Sources */,
 				E3658F3F298AD28C006E12E2 /* Frameworks */,
 				E3658F40298AD28C006E12E2 /* CopyFiles */,
+				E3EFFD12298BCEB9000056D6 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -123,6 +153,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E3658F4D298AD2D3006E12E2 /* main.cpp in Sources */,
+				E32BF81F298BC15F003F583C /* WhisperComponent.cpp in Sources */,
 				E3658F4F298AD3C4006E12E2 /* r8bbase.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -134,6 +165,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -166,6 +198,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = "\"$(SRCROOT)/../whisper/whisper.cpp\"";
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -180,6 +213,9 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../whisper/whisper.cpp\"";
+				LD_RUNPATH_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -192,6 +228,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -224,6 +261,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = "\"$(SRCROOT)/../whisper/whisper.cpp\"";
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -232,6 +270,9 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../whisper/whisper.cpp\"";
+				LD_RUNPATH_SEARCH_PATHS = "";
+				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -242,16 +283,50 @@
 		E3658F4A298AD28C006E12E2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = Q574G2LDN6;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/../whisper/whisper.cpp\"",
+					"\"$(SRCROOT)/externalHeaders/dr_wav.h\"",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "\"$(SRCROOT)/LIBS/libwhisper.dylib\"";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/LIBS",
+				);
+				OTHER_CFLAGS = "'-std=gnu++11'";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
 		};
 		E3658F4B298AD28C006E12E2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = Q574G2LDN6;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_C_LANGUAGE_STANDARD = "compiler-default";
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/../whisper/whisper.cpp\"",
+					"\"$(SRCROOT)/externalHeaders/dr_wav.h\"",
+				);
+				LD_RUNPATH_SEARCH_PATHS = "\"$(SRCROOT)/LIBS/libwhisper.dylib\"";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/LIBS",
+				);
+				OTHER_CFLAGS = "'-std=gnu++11'";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
 		};
