@@ -12,6 +12,7 @@
 #include "../externalHeaders/dr_wav.h"
 
 #include "whisper.h"
+#include <iostream>
 #include <stdio.h>
 #include <fstream>
 #include <cmath>
@@ -19,13 +20,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-
-//#include <libavformat/avformat.h>
-//
-//#define AUDIO_INBUF_SIZE 20480
-//#define AUDIO_REFILL_THRESH 4096
-
-
+#include <chrono>
 
 // Terminal color map. 10 colors grouped in ranges [0.0, 0.1, ..., 0.9]
 // Lowest is red, middle is yellow, highest is green.
@@ -487,6 +482,7 @@ inline bool output_wts(struct whisper_context * ctx, const char * fname, const c
 }
 
 
+
 inline int runTranscription(whisper_context* ctx, whisper_params params){
     std::vector<whisper_token> prompt_tokens;
     
@@ -549,6 +545,7 @@ inline int runTranscription(whisper_context* ctx, whisper_params params){
                 return 9;
             }
 
+            
             const uint64_t n = wav_data.empty() ? wav.totalPCMFrameCount : wav_data.size()/(wav.channels*wav.bitsPerSample/8);
 
             std::vector<int16_t> pcm16;
@@ -632,46 +629,13 @@ inline int runTranscription(whisper_context* ctx, whisper_params params){
                 wparams.encoder_begin_callback_user_data = &is_aborted;
             }
 
-            if (whisper_full_parallel(ctx, wparams, pcmf32.data(), pcmf32.size(), params.n_processors) != 0) {
+            
+            // buffers are fed here
+            
+            if (whisper_full_parallel(ctx, wparams, pcmf32.data(), (int)pcmf32.size(), params.n_processors) != 0) {
                 fprintf(stderr, "%s: failed to process audio\n", "");
                 return 10;
             }
-        }
-
-        // output stuff
-        {
-            printf("\n");
-
-            // output to text file
-            if (params.output_txt) {
-                const auto fname_txt = fname_outp + ".txt";
-                output_txt(ctx, fname_txt.c_str());
-            }
-
-            // output to VTT file
-            if (params.output_vtt) {
-                const auto fname_vtt = fname_outp + ".vtt";
-                output_vtt(ctx, fname_vtt.c_str());
-            }
-
-            // output to SRT file
-            if (params.output_srt) {
-                const auto fname_srt = fname_outp + ".srt";
-                output_srt(ctx, fname_srt.c_str(), params);
-            }
-
-            // output to WTS file
-            if (params.output_wts) {
-                const auto fname_wts = fname_outp + ".wts";
-                output_wts(ctx, fname_wts.c_str(), fname_inp.c_str(), params, float(pcmf32.size() + 1000)/WHISPER_SAMPLE_RATE);
-            }
-
-        // output to CSV file
-            if (params.output_csv) {
-                const auto fname_csv = fname_outp + ".csv";
-                output_csv(ctx, fname_csv.c_str());
-            }
-
         }
     }
 
@@ -680,5 +644,64 @@ inline int runTranscription(whisper_context* ctx, whisper_params params){
     return 0;
 }
 
+inline int callWhisperFullWithoutAudiofile(whisper_context* ctx, whisper_params params, const float* samples, int data_size, int processors){
+    std::vector<std::vector<float>> pcmf32s;
+    whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+
+    wparams.strategy = params.beam_size > 1 ? WHISPER_SAMPLING_BEAM_SEARCH : WHISPER_SAMPLING_GREEDY;
+
+    wparams.print_realtime   = false;
+    wparams.print_progress   = params.print_progress;
+    wparams.print_timestamps = !params.no_timestamps;
+    wparams.print_special    = params.print_special;
+    wparams.translate        = params.translate;
+    wparams.language         = params.language.c_str();
+    wparams.n_threads        = params.n_threads;
+    wparams.n_max_text_ctx   = params.max_context >= 0 ? params.max_context : wparams.n_max_text_ctx;
+    wparams.offset_ms        = params.offset_t_ms;
+    wparams.duration_ms      = params.duration_ms;
+
+    wparams.token_timestamps = params.output_wts || params.max_len > 0;
+    wparams.thold_pt         = params.word_thold;
+    wparams.entropy_thold    = params.entropy_thold;
+    wparams.logprob_thold    = params.logprob_thold;
+    wparams.max_len          = params.output_wts && params.max_len == 0 ? 60 : params.max_len;
+
+    wparams.speed_up         = params.speed_up;
+
+    wparams.greedy.best_of        = params.best_of;
+    wparams.beam_search.beam_size = params.beam_size;
+
+    wparams.prompt_tokens     = nullptr;
+    wparams.prompt_n_tokens   = 0;
+
+    whisper_print_user_data user_data = { &params, &pcmf32s };
+
+    // this callback is called on each new segment
+    if (!wparams.print_realtime) {
+        wparams.new_segment_callback           = whisper_print_segment_callback;
+        wparams.new_segment_callback_user_data = &user_data;
+    }
+
+    // example for abort mechanism
+    // in this example, we do not abort the processing, but we could if the flag is set to true
+    // the callback is called before every encoder run - if it returns false, the processing is aborted
+    static bool is_aborted = false; // NOTE: this should be atomic to avoid data race
+    
+    wparams.encoder_begin_callback = [](struct whisper_context * /*ctx*/, void * user_data) {
+        bool is_aborted = *(bool*)user_data;
+        return !is_aborted;
+    };
+    wparams.encoder_begin_callback_user_data = &is_aborted;
+    
+    // buffers are fed here
+    
+    if (whisper_full_parallel(ctx, wparams, samples, data_size, params.n_processors != 0)) {
+        fprintf(stderr, "%s: failed to process audio\n", "");
+        return 10;
+    }
+    //whisper_print_timings(ctx);
+    return 0;
+}
 
 #endif

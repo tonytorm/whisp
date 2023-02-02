@@ -9,11 +9,9 @@
 // /Users/tonytorm/Desktop/HH/rachel_0.8.mp3
 // /Users/tonytorm/Desktop/kraken_media/17Y07M04/S30T01.WAV   few file paths
 
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <chrono>
 
 const uint32_t chunk_RIFF = 'RIFF';
 const uint32_t chunk_RF64 = 'RF64';
@@ -228,6 +226,8 @@ IntType convertToInt (FloatType v) noexcept {
                     : static_cast<IntType> (scaled));
 }
 
+
+
 void ConvertDoubleToByteArray (char* dest, double v){     // double to int16_t
     int16_t i = convertToInt<int16_t, 0x7FFF> (v);        // i = 0xABCD
     dest[0] = static_cast<char> (i);                      // dest[0] = AB
@@ -308,8 +308,15 @@ void printElapsedTimeSince(std::chrono::time_point<std::chrono::high_resolution_
 }
 
 int main(){
+    // whisper init
     auto start = std::chrono::high_resolution_clock::now();
     std::cout << "START\n" << '\n';
+    
+    whisper_params params;
+    params.model = "/Users/tonytorm/Documents/gCoding/whisp/models/ggml-model-whisper-tiny.en.bin";
+    whisper_context* ctx = whisper_init_from_file(params.model.c_str());
+    
+    
     const double OutSampleRate = 16000.0;
     AudioFile wavFile;
     auto filePath = "/Users/tonytorm/Desktop/kraken_media/bal/MIXER-A-T01.WAV";
@@ -356,8 +363,11 @@ int main(){
         }
         char buffer[INPUTBUFFERSIZE];                          // allocate an interleaved buffer
         int dataRead = 0;
+        std::vector<float> floatBuffer;
         //std::cout << "nb of required buffers: " << wavFile._datasize / INPUTBUFFERSIZE << '\n';
         while (inputStream.read(buffer, INPUTBUFFERSIZE)) { // buffer speed
+            static int bufferCounter = 0;
+            bufferCounter++;
             static int count = 0;
             if (count ==0){    // just signal start of processing
                 std::cout << "Starting bit depth/sampling conversion -  ";
@@ -381,14 +391,36 @@ int main(){
             double* resampledBuffers[channelCount];
             for (int j = 0; j < channelCount; j++){
                 auto& resampler = resamplers[j];
-                int writeCount;
+                int writeCount = 0;
                 writeCount = resampler->process(convertedPlanarBuffers[j].data(), InBufCapacity, resampledBuffers[j]);
-                for (int i = 0; i < writeCount; i++){
-                    char outSample[2] = {0, 0};
-                    ConvertDoubleToByteArray(outSample, resampledBuffers[j][i]);
-                    streamDataSampleInBytes(outputStreams[j], outSample);
+                
+                
+                
+                if (j == 1){
+                    int prevSize = (int)floatBuffer.size();
+                    floatBuffer.resize(prevSize + writeCount);
+                    for (int i = 0; i < writeCount; i++){
+                        double* doubleBuffer = resampledBuffers[1];
+                        floatBuffer[i+prevSize] = doubleBuffer[i];
+                    }
                 }
+                
+//                if (floatBuffer.size() != 0) std::cout << "FLOAT BUFFER SIZE :" << floatBuffer.size() << '\n';
+//                for (int i = prevSize; i < floatBuffer.size(); i++){
+//                    floatBuffer[i] = -1;
+//                }
+//                    char outSample[2] = {0, 0};
+//                    ConvertDoubleToByteArray(outSample, (float)resampledBuffers[j][i]);
+//                    streamDataSampleInBytes(outputStreams[j], outSample);
+                
             }
+            
+            if (bufferCounter == 200){
+                callWhisperFullWithoutAudiofile(ctx, params, floatBuffer.data(), (int)floatBuffer.size(), params.n_processors != 0);
+                bufferCounter = 0;
+                floatBuffer.clear();
+            }
+            
             dataRead += inputStream.gcount();
             if (dataRead >= wavFile._datasize){
                 break;
@@ -396,27 +428,36 @@ int main(){
         }
         std::cout<< "Almost done, closing file streams -  ";
         printElapsedTimeSince(start);
+        std::cout<<'\n';
         inputStream.close();
         for (int i = 0; i < channelCount; i++){
             // we should write data chunk size in here
             outputStreams[i].close();
         }
     }
-//        whisper_params params;
-//        // input a single 44.1k 16bit audiofile
-//        params.fname_inp.push_back("/Users/tonytorm/Desktop/TESTWAV1.wav");
+    
+//    whisper_params _params;
+//    // input a single 44.1k 16bit audiofile
+//    _params.fname_inp.push_back("/Users/tonytorm/Documents/gCoding/whisp/TESTFILES/TESTWAV1.wav");
 //
-//        // whisper init
-//        params.model = "/Users/tonytorm/Documents/gCoding/whisp/models/ggml-model-whisper-tiny.en.bin";
-//        whisper_context* ctx = whisper_init_from_file(params.model.c_str());
+//    // whisper init
+//    params.model = "/Users/tonytorm/Documents/gCoding/whisp/models/ggml-model-whisper-tiny.en.bin";
+//    whisper_context* _ctx = whisper_init_from_file(_params.model.c_str());
 //
-//        if (ctx == nullptr) {
-//            fprintf(stderr, "error: failed to initialize whisper context\n");
-//            return 0;
-//        }
+//    if (_ctx == nullptr) {
+//        fprintf(stderr, "error: failed to initialize whisper context\n");
+//        return 0;
+//    }
+//    std::cout << '\n' << "Model loaded -  ";
+//    printElapsedTimeSince(start);
+//    std::cout << '\n';
 //
-//        runTranscription(ctx, params);
-    std::cout << "Conversion completed -  ";
+//    // 1.42 secs on 4.41 minutes file
+//
+//
+//    runTranscription(_ctx, _params);
+    std::cout << "ALL DONE -  ";
     printElapsedTimeSince(start);
     return 0;
 }
+
