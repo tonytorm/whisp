@@ -44,6 +44,7 @@
 		E3658F42298AD28C006E12E2 /* Whisp_playground */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Whisp_playground; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3658F4C298AD2D3006E12E2 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = SOURCE_ROOT; };
 		E3658F4E298AD3C4006E12E2 /* r8bbase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = r8bbase.cpp; path = resamplingCode/r8bbase.cpp; sourceTree = "<group>"; };
+		E3EFFD18298D6FA1000056D6 /* gFunctions.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = gFunctions.hpp; path = whisp/gFunctions.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				E3658F4C298AD2D3006E12E2 /* main.cpp */,
+				E3EFFD18298D6FA1000056D6 /* gFunctions.hpp */,
 				E32BF81D298BC15F003F583C /* WhisperComponent.cpp */,
 				E32BF81E298BC15F003F583C /* WhisperComponent.hpp */,
 			);
